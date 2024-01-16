@@ -3,9 +3,11 @@ import { format } from 'date-fns';
 import {
   Avatar,
   Box,
+  Button,
   Card,
   Checkbox,
   Stack,
+  SvgIcon,
   Table,
   TableBody,
   TableCell,
@@ -14,7 +16,10 @@ import {
   TableRow,
   Typography
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { getInitials } from 'src/utils/get-initials';
+import FormDialogEdit from 'src/components/FormDialogEdit';
+import { useState } from 'react';
 
 export const CustomersTable = (props) => {
   const {
@@ -32,12 +37,50 @@ export const CustomersTable = (props) => {
     onSubmitSuccess
   } = props;
 
+  const [open, setOpen] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  async function deleteCustomer() {
+    if (customersSelected.length > 0) {
+      try {
+        const deletePromises = customersSelected.map(async (customer) => {
+          const response = await fetch(`http://localhost:8080/delete/${customer.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+  
+          if (response.ok) {
+            console.log(`Customer ${customer.id} deleted successfully`);
+          } else {
+            console.error(`Error deleting customer ${customer.id}`);
+          }
+        });
+  
+        await Promise.all(deletePromises);
+        onSubmitSuccess();
+      } catch (error) {
+        console.error('Error deleting customers:', error);
+      }
+    }
+  }
 
   const selectedSome = (selected.length > 0) && (selected.length < items.length);
   const selectedAll = (items.length > 0) && (selected.length === items.length);
 
+  const [customersSelected, setCustomersSelected] = useState([]);
+
   return (
-    <Card>
+    <>
+      <Card>
         <Box sx={{ minWidth: 800 }}>
           <Table>
             <TableHead>
@@ -49,98 +92,87 @@ export const CustomersTable = (props) => {
                     onChange={(event) => {
                       if (event.target.checked) {
                         onSelectAll?.();
+                        setCustomersSelected(items)
                       } else {
                         onDeselectAll?.();
+                        setCustomersSelected([])
                       }
                     }}
                   />
                 </TableCell>
-                <TableCell>
-                  Name
-                </TableCell>
-                <TableCell>
-                  Lastname
-                </TableCell>
-                <TableCell>
-                  Birthdate
-                </TableCell>
-                <TableCell>
-                  CUIT
-                </TableCell>
-                <TableCell>
-                  Address
-                </TableCell>
-                <TableCell>
-                  Phone Number
-                </TableCell>
-                <TableCell>
-                  Email
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Lastname</TableCell>
+                <TableCell>Birthdate</TableCell>
+                <TableCell>CUIT</TableCell>
+                <TableCell>Address</TableCell>
+                <TableCell>Phone Number</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell></TableCell>
               </TableRow>
             </TableHead>
-            <TableBody>
-              {
-                items==[] ? (<Typography variant="subtitle2">The customer table is empty !</Typography>)
-                :
-              items.map((customer) => {
-                const isSelected = selected.includes(customer.id);
-                return (
-                  <TableRow
-                    hover
-                    key={customer.id}
-                    selected={isSelected}
-                  >
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={(event) => {
-                          if (event.target.checked) {
-                            onSelectOne?.(customer.id);
-                          } else {
-                            onDeselectOne?.(customer.id);
-                          }
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Stack
-                        alignItems="center"
-                        direction="row"
-                        spacing={2}
-                      >
-                        <Avatar>
-                          {getInitials(customer.name)}
-                        </Avatar>
-                        <Typography variant="subtitle2">
-                          {customer.name}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      {customer.lastname}
-                    </TableCell>
-                    <TableCell>
-                      {customer.birthdate}
-                    </TableCell>
-                    <TableCell>
-                      {customer.cuit}
-                    </TableCell>
-                    <TableCell>
-                      {customer.address}
-                    </TableCell>
-                    <TableCell>
-                      {customer.phoneNumber}
-                    </TableCell>
-                    <TableCell>
-                      {customer.email}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+            <TableBody sx={{textAlign:"center"}}>
+              {items.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} sx={{ textAlign: "center" }}>
+                    <Typography variant='subtitle1'>The customer table is empty!</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                items.map((customer) => {
+                  const isSelected = selected.includes(customer.id);
+                  return (
+                    <TableRow hover key={customer.id} selected={isSelected}>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={(event) => {
+                            if (event.target.checked) {
+                              onSelectOne?.(customer.id);
+                              const customersUpdate = [...customersSelected, customer]
+                              setCustomersSelected(customersUpdate)
+                              console.log(customersSelected)
+                            } else {
+                              onDeselectOne?.(customer.id);
+                              const customersUpdate = customersSelected.filter((selectedCustomer) => selectedCustomer.id !== customer.id);
+                              setCustomersSelected(customersUpdate)
+                              console.log(customersSelected)
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Stack alignItems="center" direction="row" spacing={2}>
+                          <Avatar>{getInitials(customer.name)}</Avatar>
+                          <Typography variant="subtitle2">{customer.name}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>{customer.lastname}</TableCell>
+                      <TableCell>{customer.birthdate}</TableCell>
+                      <TableCell>{customer.cuit}</TableCell>
+                      <TableCell>{customer.address}</TableCell>
+                      <TableCell>{customer.phoneNumber}</TableCell>
+                      <TableCell>{customer.email}</TableCell>
+                      <TableCell>
+                        <FormDialogEdit open={open} handleClickOpen={handleClickOpen} handleClose={handleClose} customer={customer} onSubmitSuccess={onSubmitSuccess}></FormDialogEdit>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </Box>
-    </Card>
+        <Button sx={{margin:"15px"}}
+                          startIcon={
+                            <SvgIcon fontSize="small">
+                              <DeleteIcon />
+                            </SvgIcon>
+                          }
+                          variant="contained"
+                          onClick={deleteCustomer}
+                        >Delete</Button>
+      </Card>
+    </>
   );
 };
 

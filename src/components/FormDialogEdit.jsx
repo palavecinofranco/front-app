@@ -7,28 +7,26 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { SvgIcon } from '@mui/material';
-import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import EditIcon from '@mui/icons-material/Edit';
 import { useState } from 'react';
 import { format } from 'date-fns';
 
-function FormDialogAdd({open, handleClose, handleClickOpen, onSubmitSuccess}) {
+function FormDialogEdit({open, handleClose, handleClickOpen, onSubmitSuccess, customer}) {
     const [customerInfo, setCustomerInfo] = useState({
-        name: '',
-        lastname: '',
+        name: customer.name,
+        lastname: customer.lastname,
         birthdate: null,
-        cuit: '',
-        address: '',
-        phoneNumber: '',
-        email: '',
+        cuit: customer.cuit,
+        address: customer.address,
+        phoneNumber: customer.phoneNumber,
+        email: customer.email,
       });
 
-    async function saveCustomer (formJson) {
+    async function editCustomer (formJson) {
         try {
           console.log(formJson)
-          const response = await fetch('http://localhost:8080/save', {
-            method: 'POST',
+          const response = await fetch('http://localhost:8080/edit/' + customer.id, {
+            method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
             },
@@ -36,11 +34,11 @@ function FormDialogAdd({open, handleClose, handleClickOpen, onSubmitSuccess}) {
           });
       
           if (response.ok) {
-            console.log('Customer save succesfully');
+            console.log('Customer edit succesfully');
             onSubmitSuccess();
             handleClose();
           } else {
-            console.error('Customer save error');
+            console.error('Customer edit error');
           }
         } catch (error) {
           console.error(error);
@@ -48,15 +46,15 @@ function FormDialogAdd({open, handleClose, handleClickOpen, onSubmitSuccess}) {
     }
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <div>
         <Button
             startIcon={(
                 <SvgIcon fontSize="small">
-                    <PlusIcon />
+                    <EditIcon />
                 </SvgIcon>
             )}
-            variant="contained"
-            onClick={handleClickOpen}>Add</Button>
+            variant="text"
+            onClick={handleClickOpen}></Button>
         <Dialog
         open={open}
         onClose={handleClose}
@@ -70,12 +68,12 @@ function FormDialogAdd({open, handleClose, handleClickOpen, onSubmitSuccess}) {
             if(formJson.birthdate!==""){
               formJson.birthdate = format(new Date(formJson.birthdate), "dd/MM/yyyy")
             }
-            saveCustomer(formJson)
+            editCustomer(formJson)
             handleClose();
           },
         }}
       >
-        <DialogTitle>Add Customer</DialogTitle>
+        <DialogTitle>Edit Customer</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Enter customer details
@@ -90,6 +88,8 @@ function FormDialogAdd({open, handleClose, handleClickOpen, onSubmitSuccess}) {
             onChange={(e) => setCustomerInfo({ ...customerInfo, lastname: e.target.value })}
           />
           <TextField sx={{marginTop:"25px"}} type="date" id='birthdate' name='birthdate' fullWidth
+          value={customer.birthdate}
+          defaultValue={customer.birthdate}
             onChange={(e) => {
                 const date = new Date(e.target.value);
                 setCustomerInfo({ ...customerInfo, birthdate: date });
@@ -118,11 +118,11 @@ function FormDialogAdd({open, handleClose, handleClickOpen, onSubmitSuccess}) {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button type="submit">Save</Button>
+          <Button type="submit">Accept</Button>
         </DialogActions>
       </Dialog>
-    </LocalizationProvider>
+    </div>
   )
 }
 
-export default FormDialogAdd
+export default FormDialogEdit

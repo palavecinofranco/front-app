@@ -7,7 +7,6 @@ import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { CustomersTable } from 'src/sections/customer/customers-table';
 import { CustomersSearch } from 'src/sections/customer/customers-search';
 import { applyPagination } from 'src/utils/apply-pagination';
-import EditIcon from '@mui/icons-material/Edit';
 import FormDialogAdd from 'src/components/FormDialogAdd';
 
 const Page = () => {
@@ -28,7 +27,6 @@ const fetchData = async () => {
   try {
     const response = await fetch('http://localhost:8080/list');
     const result = await response.json();
-    console.log(result)
     setListCustomers(result);
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -63,7 +61,6 @@ const useCustomerIds = (listCustomers) => {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const customers = useCustomers(page, rowsPerPage);
   const customersIds = useCustomerIds(listCustomers);
   const customersSelection = useSelection(customersIds);
 
@@ -126,15 +123,6 @@ const useCustomerIds = (listCustomers) => {
               selected={customersSelection.selected}
               onSubmitSuccess={updateListCustomers} 
             />
-            <Button
-            startIcon={(
-                <SvgIcon fontSize="small">
-                    <EditIcon/>
-                </SvgIcon>
-            )}
-            variant="contained"
-            style={{width:"100px"}}
-            >Edit</Button>
           </Stack>
         </Container>
       </Box>
